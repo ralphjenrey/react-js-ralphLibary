@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import CloseIcon from '@mui/icons-material/Close';
+import '../../public/assets/css/ViewBooks.css'
 
 import {
   IconButton,
@@ -142,24 +143,25 @@ const ViewBooks = () => {
   }, []);
 
   return (
-    <Container>
-      <Typography variant="h4" gutterBottom>
+    <Container className="card-container">
+        <Typography variant="h4" gutterBottom>
         View Books
       </Typography>
       <Grid container spacing={3}>
+    
         {books.map((book) => (
           <Grid item key={book.id} xs={12} sm={6} md={4}>
-            <Card
+            <Card className="card"
               onClick={() => handleOpenModal(book)}
               style={{ cursor: "pointer" }}
             >
-              <CardMedia
+              <CardMedia className="card-img"
                 component="img"
                 height="400"
                 image={book.bookImage}
                 alt={book.bookName}
               />
-              <CardContent>
+              <CardContent className="card-description">
                 <Typography variant="h6" component="div">
                   {book.bookName}
                 </Typography>
