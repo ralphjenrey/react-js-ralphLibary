@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Card, CardContent, Typography, Grid, Container } from '@mui/material';
 import { getFirestore, collection, getDocs, query, where } from 'firebase/firestore';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import Loading from '../components/Loading';
 
 const AdminHome = () => {
   const [loading, setLoading] = useState(true);
@@ -56,7 +57,7 @@ const AdminHome = () => {
   };
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <div><Loading state={loading} size={30}/></div>;
   }
 
   if (error) {

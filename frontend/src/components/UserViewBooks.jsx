@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
-import CloseIcon from '@mui/icons-material/Close';
-
+import CloseIcon from "@mui/icons-material/Close";
 import {
   IconButton,
   Card,
@@ -19,18 +18,23 @@ import {
   InputLabel,
   Alert,
 } from "@mui/material";
-
-import { getFirestore, collection, getDocs,doc,setDoc, getDoc, updateDoc } from 'firebase/firestore';
+import { getFirestore, collection, getDocs, doc, setDoc, getDoc, updateDoc } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
+import Loading from "./Loading";
 
 const UserViewBooks = () => {
   const [openModal, setOpenModal] = useState(false);
   const [selectedBook, setSelectedBook] = useState(null);
   const [books, setBooks] = useState([]);
+  const [selectedDepartment, setSelectedDepartment] = useState("All");
   const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+
   const handleOpenModal = (book) => {
-    setSelectedBook(book);
-    setOpenModal(true);
+    if (selectedDepartment === "All" || book.department === selectedDepartment) {
+      setSelectedBook(book);
+      setOpenModal(true);
+    }
   };
 
   const handleCloseModal = () => {
@@ -47,8 +51,9 @@ const UserViewBooks = () => {
       // Check if the user's UID already exists in the 'borrowed' collection
       const db = getFirestore();
       const borrowedRef = doc(db, 'borrowed', user?.uid);
+      setLoading(true);
       const borrowedDoc = await getDoc(borrowedRef);
-  
+      
       if (borrowedDoc.exists()) {
         // If the document exists, show an error message
         console.error('Error borrowing book: User already borrowed a book.');
@@ -56,7 +61,8 @@ const UserViewBooks = () => {
         // You can also display a user-friendly error message to the user
         return;
       }
-  
+      
+
       // Update the book quantity in Firestore
       const bookRef = doc(db, 'books', selectedBook?.id);
   
@@ -100,58 +106,144 @@ const UserViewBooks = () => {
       // Add your additional borrowing logic here if needed
     } catch (error) {
       console.error('Error borrowing book:', error.message);
+    } finally{
+      setLoading(false);
     }
-  };
-
+  } 
   useEffect(() => {
-    // Function to fetch books from Firestore
     const fetchBooks = async () => {
-      const db = getFirestore();
-      const booksCollection = collection(db, 'books');
-      const booksSnapshot = await getDocs(booksCollection);
-      const booksData = booksSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-      setBooks(booksData);
+      try {
+        setLoading(true);
+        const db = getFirestore();
+        const booksCollection = collection(db, "books");
+        const booksSnapshot = await getDocs(booksCollection);
+        const booksData = booksSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+
+        const filteredBooks = booksData.filter(
+          (book) => selectedDepartment === "All" || book.department === selectedDepartment
+        );
+
+        setBooks(filteredBooks);
+      } catch (error) {
+        console.error("Error fetching books:", error.message);
+      } finally {
+        setLoading(false);
+      }
     };
 
-    // Call the fetchBooks function when the component mounts
     fetchBooks();
-  }, []);
+  }, [selectedDepartment]);
+
+  const handleDepartmentFilter = (department) => {
+    setSelectedDepartment(department);
+  };
 
   return (
     <Container>
-      <Typography variant="h4" gutterBottom>
-        View Books
-      </Typography>
-      <Grid container spacing={3}>
-        {books.map((book) => (
-          <Grid item key={book.id} xs={12} sm={6} md={6}>
-            <Card
-              onClick={() => handleOpenModal(book)}
-              style={{ cursor: "pointer" }}
-            >
-              <CardMedia
-                component="img"
-                height="400"
-                image={book.bookImage}
-                alt={book.bookName}
-              />
-              <CardContent>
-                <Typography variant="h6" component="div">
-                  {book.bookName}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {book.author}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Quantity: {book.quantity}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Department: {book.department}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
+      <div className="filter-button-container"   style={{
+          position: "fixed",
+          top: 0,
+          left: "50%",
+          transform: "translateX(-50%)",
+          zIndex: 1000,
+          width: "100%",
+          marginBottom: "50px",
+          marginTop: "80px",
+        }}>
+        <Typography variant="h4" gutterBottom>
+          View Books
+        </Typography>
+        <Button
+          className="filter-button"
+          variant={selectedDepartment === "All" ? "contained" : "outlined"}
+          onClick={() => handleDepartmentFilter("All")}
+        >
+          All
+        </Button>
+        <Button
+          className="filter-button"
+          variant={
+            selectedDepartment === "Information Technology"
+              ? "contained"
+              : "outlined"
+          }
+          onClick={() => handleDepartmentFilter("Information Technology")}
+        >
+          Information Technology
+        </Button>
+        <Button
+          className="filter-button"
+          variant={
+            selectedDepartment === "Development Communication"
+              ? "contained"
+              : "outlined"
+          }
+          onClick={() => handleDepartmentFilter("Development Communication")}
+        >
+          Development Communication
+        </Button>
+        <Button
+          className="filter-button"
+          variant={selectedDepartment === "Tourism" ? "contained" : "outlined"}
+          onClick={() => handleDepartmentFilter("Tourism")}
+        >
+          Tourism
+        </Button>
+        <Button
+          className="filter-button"
+          variant={
+            selectedDepartment === "Hotel Management" ? "contained" : "outlined"
+          }
+          onClick={() => handleDepartmentFilter("Hotel Management")}
+        >
+          Hotel Management
+        </Button>
+        <Button
+          className="filter-button"
+          variant={
+            selectedDepartment === "Education" ? "contained" : "outlined"
+          }
+          onClick={() => handleDepartmentFilter("Education")}
+        >
+          Education
+        </Button>
+      </div>
+      <Grid container spacing={3}   sx={{ marginTop: "200px" }}>
+        {loading ? (
+          <Loading state={loading} size={30} />
+        ) : (
+          books.map((book) => (
+            <Grid item key={book.id} xs={12} sm={6} md={4}>
+              <Card height="500"
+        sx={{ padding: "0", minHeight: "400px", minWidth:"300px"}}
+                onClick={() => handleOpenModal(book)}
+                style={{ cursor: "pointer" }}
+              >
+                <CardMedia
+                
+                  component="img"
+                  image={book.bookImage}
+                  alt={book.bookName}
+                
+                />
+                <CardContent>
+                  <Typography variant="h6" component="div">
+                    {book.bookName}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {book.author}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Quantity: {book.quantity}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Department: {book.department}
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+          ))
+        )}
       </Grid>
 
       {/* Modal for Book Details */}
@@ -187,6 +279,7 @@ const UserViewBooks = () => {
             variant="contained"
             color="primary"
             sx={{ margin: "10px" }}
+            endIcon={<Loading state={loading} size={5} />}
           >
             Borrow
           </Button>

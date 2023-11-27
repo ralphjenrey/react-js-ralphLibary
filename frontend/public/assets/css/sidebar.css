@@ -1,0 +1,18 @@
+.sidebar-button{
+    color: white;
+    background-color: #1976d2;
+    border-radius: 10px;
+}
+
+.sidebar-button:hover{
+    color: white;
+}
+.sidebar-button-container{
+    padding: 0 15px !important;
+}
+.sidebar-text{
+    font-weight: 600;
+}
+.sidebar-submenu{
+    color: black;
+}

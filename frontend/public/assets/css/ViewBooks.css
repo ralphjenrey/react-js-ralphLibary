@@ -1,3 +1,14 @@
 .card-container{
     margin-top: 50px;
 }
+
+.filter-button{
+    margin: 0 10px !important;
+}
+@media screen and (max-width: 768px) {
+    .filter-button{
+       margin: 0 !important;
+    }
+  
+  }
+

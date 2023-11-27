@@ -49,6 +49,9 @@ const DeleteAccount = () => {
 
     try {
       const querySnapshot = await getDocs(q);
+      if (querySnapshot.docs.length == 0){
+        setError("No results found");
+      }
       const results = [];
 
       querySnapshot.forEach((doc) => {
@@ -129,7 +132,7 @@ const DeleteAccount = () => {
             </Grid>
           </Grid>
           {error && <Alert severity="error">{error}</Alert>}
-          <Button type="button" variant="contained" color="primary" onClick={handleSearch}>
+          <Button type="button" variant="contained" color="primary" onClick={handleSearch} sx={{marginTop: "20px"}}>
             Search
           </Button>
 
@@ -176,7 +179,7 @@ const DeleteAccount = () => {
             </TableContainer>
           )}
 
-          <Button variant="contained" color="primary" onClick={handleDelete}>
+          <Button variant="contained" color="primary" onClick={handleDelete} sx={{marginTop: "20px"}}>
             Delete Account
           </Button>
         </form>

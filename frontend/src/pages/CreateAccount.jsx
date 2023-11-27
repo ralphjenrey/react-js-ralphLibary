@@ -152,7 +152,7 @@ const CreateAccount = () => {
           {error && <Alert severity="error">{error}</Alert>}
           {success && <Alert severity="success">{success}</Alert>}
 
-          <Button type="submit" variant="contained" color="primary">
+          <Button type="submit" variant="contained" color="primary" sx={{marginTop: "20px"}}>
             Create Account
           </Button>
         </form>

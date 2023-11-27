@@ -19,38 +19,41 @@ const LoginPage = () => {
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
-  const handleLogin = async () => {
-    try {
-      if (!email || !password) {
-        setError("Please fill up all fields.");
-        return;
-      }
-
-      const auth = getAuth();
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      
-      const db = getFirestore();
-      const usersCollection = collection(db, 'users');
-      const userDocRef = doc(usersCollection, userCredential.user.uid);
-      const userDoc = await getDoc(userDocRef);
-      const userRole = userDoc.data().role;
-      
+  const handleLogin = async (event) => {
+      event.preventDefault();
+      try {
+        if (!email || !password) {
+          setError("Please fill up all fields.");
+          return;
+        }
+  
+        const auth = getAuth();
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        
+        const db = getFirestore();
+        const usersCollection = collection(db, 'users');
+        const userDocRef = doc(usersCollection, userCredential.user.uid);
+        const userDoc = await getDoc(userDocRef);
+        const userRole = userDoc.data().role;
+        
+       
+  
      
-
-   
-      if (userRole === 'Admin') {
-        navigate("/admin-home");
-      } else if (userRole === 'Staff') {
-        navigate("/staff-home");
-      } else {
-        navigate("/user-home");
+        if (userRole === 'Admin') {
+          navigate("/admin-home");
+        } else if (userRole === 'Staff') {
+          navigate("/staff-home");
+        } else {
+          navigate("/user-home");
+        }
+  
+        console.log("Login successful");
+      } catch (error) {
+        setError("Incorrect email or password.");
+        console.error("Login failed", error.message);
       }
-
-      console.log("Login successful");
-    } catch (error) {
-      setError("Incorrect email or password.");
-      console.error("Login failed", error.message);
-    }
+    
+ 
   };
 
   return (
@@ -80,6 +83,7 @@ const LoginPage = () => {
             autoFocus
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            
           />
 
           {/* Password Input */}
@@ -94,6 +98,7 @@ const LoginPage = () => {
             autoComplete="current-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+           
           />
 
           {/* Error Alert */}

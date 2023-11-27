@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import { BrowserRouter as Router, Route, Routes, useNavigate, Navigate } from "react-router-dom";
 import Sidebar from "./components/Sidebar";
 import Header from "./components/Header";
 import CreateAccount from "./pages/CreateAccount";
-import DeleteAccount from "./pages/DeleteAccount"; // Import your DeleteAccount component
+import DeleteAccount from "./pages/DeleteAccount";
 import AdminHome from "./pages/AdminHome";
 import "./App.css";
 import UpdateAccount from "./pages/UpdateAccount";
@@ -16,32 +16,61 @@ import StaffSidebar from "./components/StaffSidebar";
 import StaffHome from "./pages/StaffHome";
 import AddBooks from "./pages/AddBooks";
 import UserViewBooks from "./components/UserViewBooks";
+import BorrowedBooks from "./pages/BorrowedBooks";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { collection, doc, getDoc, getDocs, getFirestore } from "firebase/firestore";
 
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [authenticated, setAuthenticated] = useState(false);
+  const [userRole, setUserRole] = useState("");
 
+  useEffect(() => {
+    const auth = getAuth();
+
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      setAuthenticated(!!user);
+
+      if (!user) {
+        setUserRole("");
+        navigate('/'); // Redirect to login page if not authenticated
+        
+        return;
+      }
+
+      const db = getFirestore();
+      const usersCollection = collection(db, "users");
+      const usersDocRef =  doc(usersCollection, user.uid);
+
+      try {
+        const userDoc = await getDoc(usersDocRef);
+        
+        if (userDoc.exists){
+          setUserRole(userDoc.data().role);
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+    
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
   };
 
+  
+
+ 
   return (
     <Router>
       <>
-        <Protect allowedRoles={["Admin", "User","Staff"]}>
-
-        <Header onMenuButtonClick={toggleSidebar}/>
+        <Protect allowedRoles={["Admin", "User", "Staff"]}>
+          <Header onMenuButtonClick={toggleSidebar} />
         </Protect>
 
-        <Protect allowedRoles={["Admin"]}>
+        <Protect allowedRoles={["Admin", "User", "Staff"]}>
           <Sidebar
-            open={sidebarOpen}
-            onClose={toggleSidebar}
-            onMenuButtonClick={toggleSidebar}
-          />
-        </Protect>
-
-        <Protect allowedRoles={["User"]}>
-          <UserSidebar
             open={sidebarOpen}
             onClose={toggleSidebar}
             onMenuButtonClick={toggleSidebar}
@@ -50,16 +79,7 @@ function App() {
 
         
 
-        <Protect allowedRoles={["Staff"]}>
-          <StaffSidebar
-            open={sidebarOpen}
-            onClose={toggleSidebar}
-            onMenuButtonClick={toggleSidebar}
-          />
-        </Protect>
-
         <Routes>
-          <Route path="/" element={<LoginPage />} />
           <Route
             element={
               <Protect allowedRoles={["Admin"]}>
@@ -86,7 +106,7 @@ function App() {
           />
           <Route
             element={
-              <Protect allowedRoles={["Admin"]}>
+              <Protect allowedRoles={["Admin", "User", "Staff"]}>
                 <ViewBooks />
               </Protect>
             }
@@ -100,13 +120,8 @@ function App() {
             }
             path="/admin-home"
           />
-          <Route element={ <Protect allowedRoles={["User"]}>
-          <UserViewBooks></UserViewBooks>
-        </Protect>} path="/user-books"/>
        
-       
-
-<Route
+        <Route
             element={
               <Protect allowedRoles={["Admin"]}>
                 <AddBooks />
@@ -123,6 +138,14 @@ function App() {
             }
             path="/user-home"
           />
+           <Route
+            element={
+              <Protect allowedRoles={["Staff"]}>
+                <BorrowedBooks />
+              </Protect>
+            }
+            path="/borrowed-books"
+          />
 
           <Route
             element={
@@ -132,10 +155,31 @@ function App() {
             }
             path="/staff-home"
           />
-
-          <Route path="/" element={<LoginPage />} />
-          {/* Add more routes as needed */}
+      <Route
+        path="/"
+        element={
+          authenticated ? (
+            // If authenticated, check userRole and navigate accordingly
+            userRole === 'Admin' ? (
+              <Navigate to="/admin-home" />
+            ) : userRole === 'Staff' ? (
+              <Navigate to="/staff-home" />
+            ) : userRole === 'User' ? (
+              <Navigate to="/user-home" />
+            ) : (
+              // Handle other roles or unexpected cases
+              <Navigate to="/" />
+            )
+          ) : (
+            // If not authenticated, show the login page
+            <LoginPage />
+          )
+        }
+      />
+           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
+
+       
       </>
     </Router>
   );
