@@ -14,10 +14,10 @@ import { getFirestore, collection, getDocs,doc, where, updateDoc, deleteDoc, get
 import { format } from 'date-fns';
 
 
-const BorrowedBooks = () => {
+const RequestedBooks = () => {
   const [borrowedBooks, setBorrowedBooks] = useState([]);
 
-  const fetchBorrowedBooks = async () => {
+  const fetchRequestedBooks = async () => {
     const db = getFirestore();
     const borrowedCollection = collection(db, "borrowed");
   
@@ -28,7 +28,7 @@ const BorrowedBooks = () => {
         return {
           id: doc.id,
           ...data,
-          books: data.books.filter((book) => book.approval === "approved"),
+          books: data.books.filter((book) => book.approval === "pending"),
         };
       });
   
@@ -37,13 +37,13 @@ const BorrowedBooks = () => {
       console.error("Error fetching borrowed books:", error.message);
     }
   };
-  
+
   useEffect(() => {
-    fetchBorrowedBooks();
+    fetchRequestedBooks();
   }, []);
 
  
-  const handleReturnBook = async (borrowedId, bookId, bookName, fetchBorrowedBooks) => {
+  const handleApproval = async (borrowedId, bookId, bookName) => {
     const db = getFirestore();
   
     try {
@@ -56,31 +56,41 @@ const BorrowedBooks = () => {
         // Get the current quantity of the book
         const currentQuantity = bookDoc.data().quantity;
   
-        // Update the 'books' collection to increment the quantity by 1
-        await updateDoc(doc(booksCollection, bookId), {
-          quantity: currentQuantity + 1,
-        });
+        // Ensure quantity is greater than 0 before decrementing
+        if (currentQuantity > 0) {
+          // Update the 'books' collection to decrement the quantity by 1
+          await updateDoc(doc(booksCollection, bookId), {
+            quantity: currentQuantity - 1,
+          });
   
-        // Update the book in the 'borrowed' collection
-        const borrowedDocRef = doc(db, "borrowed", borrowedId);
-        await updateDoc(borrowedDocRef, {
-          books: borrowedBooks
-            .find((user) => user.id === borrowedId)
-            .books.map((book) => {
+          // Update the returned book from the 'borrowed' collection
+          const borrowedDocRef = doc(db, "borrowed", borrowedId);
+          const borrowedDoc = await getDoc(borrowedDocRef);
+  
+          if (borrowedDoc.exists()) {
+            const updatedBooks = borrowedDoc.data().books.map(book => {
               if (book.bookName === bookName) {
-                // Update the approval status to "returned"
+                // Update the approval status to "approved"
                 return {
                   ...book,
-                  approval: "returned",
-                  dateTimeReturned: new Date(),
+                  approval: "approved",
+                  dateTimeApproved: new Date(),
                 };
               }
               return book;
-            }),
-        });
+            });
   
-        // Fetch the updated borrowed books data
-        fetchBorrowedBooks();
+            // Update the 'borrowed' collection with the new 'books' array
+            await updateDoc(borrowedDocRef, { books: updatedBooks });
+            
+            // Fetch the updated borrowed books data
+            fetchRequestedBooks();
+          } else {
+            console.error("Borrowed document not found.");
+          }
+        } else {
+          console.error("Book quantity is already zero.");
+        }
       } else {
         console.error("Book not found in the 'books' collection.");
       }
@@ -91,16 +101,15 @@ const BorrowedBooks = () => {
   
   return (
     <div>
-      <h2 style={{color: "black"}}>Borrowed Books</h2>
+      <h2 style={{color: "black"}}>Request List</h2>
       <TableContainer component={Paper}>
         <Table>
           <TableHead>
             <TableRow>
-            <TableCell>Borrowed ID</TableCell>
+            <TableCell>Request ID</TableCell>
               <TableCell>Book Title</TableCell>
               <TableCell>Borrower</TableCell>
               <TableCell>Requested Date</TableCell>
-              <TableCell>Approved Date</TableCell>
               <TableCell>Action</TableCell>
             </TableRow>
           </TableHead>
@@ -112,9 +121,8 @@ const BorrowedBooks = () => {
                   <TableCell>{book.bookName}</TableCell>
                   <TableCell>{book.email}</TableCell>
                   <TableCell>{format(book.dateTimeRequested.toDate(), 'yyyy-MM-dd HH:mm')}</TableCell>
-                  <TableCell>{format(book.dateTimeApproved.toDate(), 'yyyy-MM-dd HH:mm')}</TableCell>
                   <TableCell>
-                    <Button variant="contained" onClick={() => handleReturnBook(user.id, book.bookDocId, book.bookName)}>Return Book</Button>
+                    <Button variant="contained" onClick={() => handleApproval(user.id, book.bookDocId, book.bookName)}>Approve Request</Button>
                   </TableCell>
                 </TableRow>
               ))
@@ -126,4 +134,4 @@ const BorrowedBooks = () => {
   );
 };
 
-export default BorrowedBooks;
+export default RequestedBooks;

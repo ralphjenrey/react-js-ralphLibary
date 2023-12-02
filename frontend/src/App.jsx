@@ -1,5 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { BrowserRouter as Router, Route, Routes, useNavigate, Navigate } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Route,
+  Routes,
+  useNavigate,
+  Navigate,
+} from "react-router-dom";
 import Sidebar from "./components/Sidebar";
 import Header from "./components/Header";
 import CreateAccount from "./pages/CreateAccount";
@@ -11,41 +17,54 @@ import ViewBooks from "./components/ViewBooks";
 import LoginPage from "./pages/LoginPage";
 import Protect from "./auth/PrivateRoute";
 import UserHome from "./pages/UserHome";
-import UserSidebar from "./components/UserSidebar";
-import StaffSidebar from "./components/StaffSidebar";
 import StaffHome from "./pages/StaffHome";
 import AddBooks from "./pages/AddBooks";
-import UserViewBooks from "./components/UserViewBooks";
 import BorrowedBooks from "./pages/BorrowedBooks";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
-import { collection, doc, getDoc, getDocs, getFirestore } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  getFirestore,
+} from "firebase/firestore";
+import Profile from "./pages/Profile";
+import RequestedBooks from "./pages/RequestedBooks";
+import { lightTheme, darkTheme } from "./themes";
+import { CssBaseline, ThemeProvider } from "@mui/material";
 
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [authenticated, setAuthenticated] = useState(false);
   const [userRole, setUserRole] = useState("");
+  const [theme, setTheme] = useState(
+    localStorage.getItem('darkMode') === 'enabled' ? darkTheme : lightTheme
+  );
 
+  const toggleTheme = () => {
+    const newMode = localStorage.getItem('darkMode') === 'enabled' ? 'disabled' : 'enabled';
+    localStorage.setItem('darkMode', newMode);
+    setTheme(newMode === 'enabled' ? darkTheme : lightTheme);
+  };
+
+  const auth = getAuth();
   useEffect(() => {
-    const auth = getAuth();
-
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setAuthenticated(!!user);
 
       if (!user) {
         setUserRole("");
-        navigate('/'); // Redirect to login page if not authenticated
-        
         return;
       }
 
       const db = getFirestore();
       const usersCollection = collection(db, "users");
-      const usersDocRef =  doc(usersCollection, user.uid);
+      const usersDocRef = doc(usersCollection, user.uid);
 
       try {
         const userDoc = await getDoc(usersDocRef);
-        
-        if (userDoc.exists){
+
+        if (userDoc.exists) {
           setUserRole(userDoc.data().role);
         }
       } catch (error) {
@@ -54,19 +73,19 @@ function App() {
     });
     return () => unsubscribe();
   }, []);
-    
+
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
   };
 
-  
 
- 
   return (
+    <ThemeProvider theme={theme}>
+       <CssBaseline />
     <Router>
       <>
         <Protect allowedRoles={["Admin", "User", "Staff"]}>
-          <Header onMenuButtonClick={toggleSidebar} />
+        <Header onMenuButtonClick={toggleSidebar} toggleTheme={toggleTheme} isDarkMode={theme === darkTheme} />
         </Protect>
 
         <Protect allowedRoles={["Admin", "User", "Staff"]}>
@@ -76,8 +95,6 @@ function App() {
             onMenuButtonClick={toggleSidebar}
           />
         </Protect>
-
-        
 
         <Routes>
           <Route
@@ -120,8 +137,8 @@ function App() {
             }
             path="/admin-home"
           />
-       
-        <Route
+
+          <Route
             element={
               <Protect allowedRoles={["Admin"]}>
                 <AddBooks />
@@ -138,13 +155,21 @@ function App() {
             }
             path="/user-home"
           />
-           <Route
+          <Route
             element={
               <Protect allowedRoles={["Staff"]}>
                 <BorrowedBooks />
               </Protect>
             }
             path="/borrowed-books"
+          />
+          <Route
+            element={
+              <Protect allowedRoles={["Staff"]}>
+                <RequestedBooks />
+              </Protect>
+            }
+            path="/requested-books"
           />
 
           <Route
@@ -155,33 +180,40 @@ function App() {
             }
             path="/staff-home"
           />
-      <Route
-        path="/"
-        element={
-          authenticated ? (
-            // If authenticated, check userRole and navigate accordingly
-            userRole === 'Admin' ? (
-              <Navigate to="/admin-home" />
-            ) : userRole === 'Staff' ? (
-              <Navigate to="/staff-home" />
-            ) : userRole === 'User' ? (
-              <Navigate to="/user-home" />
-            ) : (
-              // Handle other roles or unexpected cases
-              <Navigate to="/" />
-            )
-          ) : (
-            // If not authenticated, show the login page
-            <LoginPage />
-          )
-        }
-      />
-           <Route path="*" element={<Navigate to="/" />} />
+          <Route
+            path="/"
+            element={
+              authenticated ? (
+                // If authenticated, check userRole and navigate accordingly
+                userRole === "Admin" ? (
+                  <Navigate to="/admin-home" />
+                ) : userRole === "Staff" ? (
+                  <Navigate to="/staff-home" />
+                ) : userRole === "User" ? (
+                  <Navigate to="/user-home" />
+                ) : (
+                  // Handle other roles or unexpected cases
+                  <Navigate to="/" />
+                )
+              ) : (
+                // If not authenticated, show the login page
+                <LoginPage />
+              )
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <Protect allowedRoles={["Staff", "Admin", "User"]}>
+                <Profile auth={auth} />
+              </Protect>
+            }
+          ></Route>
+          <Route path="*" element={<Navigate to="/" />} />
         </Routes>
-
-       
       </>
     </Router>
+    </ThemeProvider>
   );
 }
 

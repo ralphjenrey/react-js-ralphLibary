@@ -14,7 +14,7 @@ const UserHome = () => {
 
   return (
     <Container>
-      <Typography sx={{color: "black"}} variant="h1" gutterBottom>
+      <Typography variant="h1" gutterBottom>
         User Home
       </Typography>
       <Typography variant='h4'>Welcome, {email}</Typography>    

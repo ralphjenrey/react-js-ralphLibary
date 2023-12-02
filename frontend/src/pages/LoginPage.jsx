@@ -9,7 +9,7 @@ import {
 } from "@mui/material";
 import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
-import { getFirestore, collection, doc, getDoc} from 'firebase/firestore';
+import { getFirestore, collection, doc, getDoc, query, where, getDocs} from 'firebase/firestore';
 
 
 
@@ -20,41 +20,53 @@ const LoginPage = () => {
   const navigate = useNavigate();
 
   const handleLogin = async (event) => {
-      event.preventDefault();
-      try {
-        if (!email || !password) {
-          setError("Please fill up all fields.");
-          return;
-        }
-  
-        const auth = getAuth();
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        
-        const db = getFirestore();
-        const usersCollection = collection(db, 'users');
-        const userDocRef = doc(usersCollection, userCredential.user.uid);
-        const userDoc = await getDoc(userDocRef);
-        const userRole = userDoc.data().role;
-        
-       
-  
-     
-        if (userRole === 'Admin') {
-          navigate("/admin-home");
-        } else if (userRole === 'Staff') {
-          navigate("/staff-home");
-        } else {
-          navigate("/user-home");
-        }
-  
-        console.log("Login successful");
-      } catch (error) {
-        setError("Incorrect email or password.");
-        console.error("Login failed", error.message);
+    event.preventDefault();
+    try {
+      if (!email || !password) {
+        setError("Please fill up all fields.");
+        return;
       }
-    
- 
+      const db = getFirestore();
+      const auth = getAuth();
+      const usersCollection = collection(db, 'users');
+      const userQuery = query(usersCollection, where("email", "==", email));
+      const querySnapshot = await getDocs(userQuery);
+      
+      if (querySnapshot.empty) {
+        // User not found
+        setError("User not found.");
+        return;
+      }
+      
+      const userDoc = querySnapshot.docs[0];
+      const userRole = userDoc.data().role;
+      const deletionTimestamp = userDoc.data().deletionTimestamp;
+      
+      // Check for deletionTimestamp in the user document
+      if (deletionTimestamp) {
+        setError("This account has been deleted. Please contact administrator for support");
+        return;
+      }
+      
+      // Authenticate the user if deletionTimestamp is not present
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      
+      // Continue with role-based navigation
+      if (userRole === 'Admin') {
+        navigate("/admin-home");
+      } else if (userRole === 'Staff') {
+        navigate("/staff-home");
+      } else {
+        navigate("/user-home");
+      }
+      
+      console.log("Login successful");
+    } catch (error) {
+      setError("Incorrect email or password.");
+      console.error("Login failed", error.message);
+    }
   };
+  
 
   return (
     <Container component="main" maxWidth="xs" sx={{ border: "1px solid #ccc", borderRadius: "8px", padding: "16px" }}>

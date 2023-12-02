@@ -24,19 +24,23 @@ import LogoutIcon from "@mui/icons-material/Logout";
 import { signOut } from "firebase/auth";
 import DeleteIcon from "@mui/icons-material/Delete";
 import UpdateIcon from "@mui/icons-material/Update";
+import ReceiptIcon from "@mui/icons-material/Receipt";
 import { Link, useNavigate } from "react-router-dom";
 import CreateIcon from "@mui/icons-material/Create";
 import { useEffect, useState } from "react";
+import AssignmentReturnIcon from "@mui/icons-material/AssignmentReturn";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { getFirestore, collection, doc, getDoc } from "firebase/firestore";
-import styled from "@emotion/styled";
+import SettingsIcon from '@mui/icons-material/Settings';
 import "/public/assets/css/sidebar.css";
 
 const Sidebar = ({ open, onClose, onMenuButtonClick }) => {
-  const [openManageAccount, setOpenManageAccount] = React.useState(false);
-  const [openLibrary, setOpenLibrary] = React.useState(false);
+  const [openManageAccount, setOpenManageAccount] = useState(false);
+  const [openLibrary, setOpenLibrary] = useState(false);
+  const [openSettings, setOpenSettings] = useState(false);
   const [userRole, setUserRole] = useState("");
   const location = useLocation();
+
   useEffect(() => {
     const auth = getAuth();
 
@@ -84,6 +88,10 @@ const Sidebar = ({ open, onClose, onMenuButtonClick }) => {
 
   const handleLibraryClick = () => {
     setOpenLibrary(!openLibrary);
+  };
+
+  const handleSettings = () => {
+    setOpenSettings(!openSettings);
   };
 
   // Use the useNavigate hook to get the navigate function
@@ -213,34 +221,13 @@ const Sidebar = ({ open, onClose, onMenuButtonClick }) => {
           </>
         )}
 
-{userRole === "Staff" && (
-  <ListItem
-    className={`${
-      location.pathname === "/borrowed-books" ? "sidebar-button" : ""
-    }`}
-    component={Link}
-    to="/borrowed-books"
-    sx={{
-      cursor: "pointer",
-      margin: "10px auto",
-    }}
-  >
-    <ListItemIcon>
-      <ImportContactsIcon
-        className="sidebar-icon"
-        sx={{
-          color: location.pathname === "/borrowed-books" ? "white" : "gray",
-        }}
-      />
-    </ListItemIcon>
-    <ListItemText primary="Borrowed Books" />
-  </ListItem>
-)}
         <ListItem
           onClick={handleLibraryClick}
           className={`${
             location.pathname === "/view-books" ||
-            location.pathname === "/add-books"
+            location.pathname === "/add-books" ||
+            location.pathname === "/borrowed-books" ||
+            location.pathname === "/requested-books"
               ? "sidebar-button"
               : ""
           }`}
@@ -255,7 +242,9 @@ const Sidebar = ({ open, onClose, onMenuButtonClick }) => {
               sx={{
                 color:
                   location.pathname === "/view-books" ||
-                  location.pathname === "/add-books"
+                  location.pathname === "/add-books" ||
+                  location.pathname === "/borrowed-books" ||
+                  location.pathname === "/requested-books"
                     ? "white"
                     : "gray",
               }}
@@ -290,14 +279,78 @@ const Sidebar = ({ open, onClose, onMenuButtonClick }) => {
                 <ListItemText primary="Add Books" />
               </ListItem>
             )}
+            {userRole === "Staff" && (
+              <ListItem
+                component={Link}
+                to="/borrowed-books"
+                className="sidebar-submenu"
+              >
+                <ListItemIcon>
+                  <AssignmentReturnIcon />
+                </ListItemIcon>
+                <ListItemText primary="Borrowed Books" />
+              </ListItem>
+            )}
+            {userRole === "Staff" && (
+              <ListItem
+                component={Link}
+                to="/requested-books"
+                className="sidebar-submenu"
+              >
+                <ListItemIcon>
+                  <ReceiptIcon />
+                </ListItemIcon>
+                <ListItemText primary="Requested Books" />
+              </ListItem>
+            )}
+          </List>
+        </Collapse>
+
+        <ListItem
+          onClick={handleSettings}
+          className={`${
+            location.pathname === "/profile" ? "sidebar-button" : ""
+          }`}
+          sx={{
+            cursor: "pointer",
+            margin: "10px auto",
+          }}
+        >
+          <ListItemIcon>
+            <SettingsIcon
+              className="sidebar-icon"
+              sx={{
+                color: location.pathname === "/profile" ? "white" : "gray",
+              }}
+            />
+          </ListItemIcon>
+          <ListItemText primary="Settings" />
+          {openSettings ? <ExpandLess /> : <ExpandMore />}
+        </ListItem>
+
+        <Collapse in={openSettings} timeout="auto" unmountOnExit>
+          <List component="div" disablePadding>
+            <ListItem
+              component={Link}
+              to="/profile"
+              className="sidebar-submenu"
+            >
+              <ListItemIcon>
+                <ManageAccountsIcon />
+              </ListItemIcon>
+              <ListItemText primary="Profile" />
+            </ListItem>
           </List>
         </Collapse>
 
         {/* Logout */}
-        <ListItem onClick={handleLogout}    sx={{
-                cursor: "pointer",
-                margin: "10px auto",
-              }}>
+        <ListItem
+          onClick={handleLogout}
+          sx={{
+            cursor: "pointer",
+            margin: "10px auto",
+          }}
+        >
           <ListItemIcon>
             <LogoutIcon />
           </ListItemIcon>

@@ -176,7 +176,7 @@ const UpdateAccount = () => {
           <Grid container spacing={2}>
             <Grid item xs={12}>
               <TextField
-                fullWidth
+                
                 label="ID Number"
                 variant="outlined"
                 id="idNumber"
@@ -187,7 +187,6 @@ const UpdateAccount = () => {
             </Grid>
             <Grid item xs={12}>
               <TextField
-                fullWidth
                 label="Email"
                 variant="outlined"
                 id="email"

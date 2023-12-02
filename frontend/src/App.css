@@ -1,13 +1,7 @@
-body{
-  background-color: aliceblue;
-}
-.MuiTypography-h4 {
-  color: #000000;
-}
+
 #root {
-  max-width: 1280px;
+  width: 100%;
   margin: 0 auto;
-  padding: 2rem;
   text-align: center;
 }
 

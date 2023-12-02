@@ -35,7 +35,7 @@ import {
   deleteDoc,
   setDoc,
 } from "firebase/firestore";
-import { getAuth,onAuthStateChanged } from "firebase/auth";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
 import Loading from "./Loading";
 const ViewBooks = () => {
   const [openModal, setOpenModal] = useState(false);
@@ -53,7 +53,6 @@ const ViewBooks = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
-
 
   useEffect(() => {
     const auth = getAuth();
@@ -191,22 +190,28 @@ const ViewBooks = () => {
       const borrowedDoc = await getDoc(borrowedRef);
 
       if (borrowedDoc.exists()) {
-        // If the document exists, show an error message
-        console.error("Error borrowing book: User already borrowed a book.");
-        setError("Error borrowing book: User already borrowed a book.");
-        setSuccess("");
-        // You can also display a user-friendly error message to the user
-        return;
+        const booksArray = borrowedDoc.data()?.books || [];
+        if (booksArray.length >= 2) {
+          console.error(
+            "You may have borrowed a book or have an existing request!"
+          );
+          setError("You may have borrowed a book or have an existing request!");
+          setSuccess("");
+          return;
+        }
+        // Check if the 'bookDocId' already exists in the 'booksArray'
+        const isBookAlreadyRequested = booksArray.some(
+          (book) => book.bookDocId === selectedBook?.id
+        );
+        if (isBookAlreadyRequested) {
+          console.error("Cannot request for the same book again!");
+          setError(
+            "Error borrowing book: You have already requested this book."
+          );
+          setSuccess("");
+          return;
+        }
       }
-
-      // Update the book quantity in Firestore
-      const bookRef = doc(db, "books", selectedBook?.id);
-
-      // Decrease the book quantity by 1
-      await updateDoc(bookRef, {
-        quantity: selectedBook?.quantity - 1,
-      });
-
       // Create or update the 'borrowed' collection
       if (user) {
         const borrowedRef = doc(db, "borrowed", user.uid);
@@ -220,17 +225,21 @@ const ViewBooks = () => {
                 bookName: selectedBook?.bookName,
                 bookDocId: selectedBook?.id,
                 email: user.email,
+                dateTimeRequested: new Date(), // Use current time
+                approval: "pending",
               },
             ],
           });
         } else {
           // If the document does not exist, create a new one
-          await setDoc(borrowedRef,{
+          await setDoc(borrowedRef, {
             books: [
               {
                 bookName: selectedBook?.bookName,
                 bookDocId: selectedBook?.id,
                 email: user.email,
+                dateTimeRequested: new Date(), // Use current time
+                approval: "pending",
               },
             ],
           });
@@ -398,7 +407,11 @@ const ViewBooks = () => {
           Education
         </Button>
       </div>
-      <Grid container spacing={3} sx={{ marginTop: "200px", justifyContent: "space-evenly"}}>
+      <Grid
+        container
+        spacing={3}
+        sx={{ marginTop: "200px", justifyContent: "space-evenly" }}
+      >
         {loading ? (
           <>
             <Loading state={loading} size={30} />
@@ -411,12 +424,14 @@ const ViewBooks = () => {
                 book.department === selectedDepartment
             )
             .map((book) => (
-              <Grid item key={book.id} xs={12} sm={6} md={4}>
+              <Grid item key={book.id} xs={9} sm={6} md={4}>
                 <Card
                   height="500"
                   className="card"
-                  sx={{ padding: "0", minHeight: "400px", minWidth: "300px" }}
-                  onClick={() => {handleOpenModal(book)}}
+                  sx={{ padding: "0", minHeight: "400px", width: "auto" }}
+                  onClick={() => {
+                    handleOpenModal(book);
+                  }}
                   style={{ cursor: "pointer" }}
                 >
                   <CardMedia
@@ -424,7 +439,7 @@ const ViewBooks = () => {
                     component="img"
                     image={book.bookImage}
                     alt={book.bookName}
-                    sx={{ minWidth: "150px", maxHeight: "500px" }}
+                    sx={{ minWidth: "150px", height: "400px", width: "100%"}}
                   />
                   <CardContent className="card-description">
                     <Typography variant="h6" component="div">
@@ -437,7 +452,7 @@ const ViewBooks = () => {
                       Quantity: {book.quantity}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      Department: {book.department}
+                      {book.department}
                     </Typography>
                   </CardContent>
                 </Card>
@@ -446,154 +461,160 @@ const ViewBooks = () => {
         )}
       </Grid>
       {userRole === "Admin" && (
-      <Dialog open={openModal} onClose={handleCloseModal}>
-        <DialogTitle>
-          {selectedBook?.bookName}
-          <IconButton
-            edge="end"
-            color="inherit"
-            onClick={handleCloseModal}
-            aria-label="close"
-            style={{ position: "absolute", top: 0, right: 10 }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent>
-          <TextField
-            label="Book Name"
-            value={editedBookName}
-            onChange={handleBookNameChange}
-            sx={{ margin: "10px" }}
-          />
-          <TextField
-            sx={{ margin: "10px" }}
-            label="Quantity"
-            value={editedQuantity}
-            onChange={handleQuantityChange}
-          />
-          <TextField
-            sx={{ margin: "10px" }}
-            label="Author"
-            value={editedAuthor}
-            onChange={handleAuthorChange}
-          />
-          <FormControl sx={{ margin: "10px" }}>
-            <InputLabel id="department-label">Department</InputLabel>
-            <Select
-              labelId="department-label"
-              label="Department"
-              value={editedDepartment}
-              onChange={handleDepartmentChange}
+        <Dialog open={openModal} onClose={handleCloseModal}>
+          <DialogTitle>
+            {selectedBook?.bookName}
+            <IconButton
+              edge="end"
+              color="inherit"
+              onClick={handleCloseModal}
+              aria-label="close"
+              style={{ position: "absolute", top: 0, right: 10 }}
             >
-              <MenuItem value="Information Technology">
-                Information Technology
-              </MenuItem>
-              <MenuItem value="Development Communication">
-                Development Communication
-              </MenuItem>
-              <MenuItem value="Hotel Management">Hotel Management</MenuItem>
-              <MenuItem value="Education">Education</MenuItem>
-              <MenuItem value="Tourism">Tourism</MenuItem>
-            </Select>
-          </FormControl>
-          <RadioGroup
-            row
-            aria-label="image-source-type"
-            name="image-source-type"
-            value={imageSourceType}
-            onChange={handleImageSourceTypeChange}
-            sx={{ margin: "10px" }}
-          >
-            <FormControlLabel
-              value="url"
-              control={<Radio />}
-              label="Book Image URL"
+              <CloseIcon />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent>
+            <TextField
+              label="Book Name"
+              value={editedBookName}
+              onChange={handleBookNameChange}
+              sx={{ margin: "10px" }}
             />
-            <FormControlLabel
-              value="upload"
-              control={<Radio />}
-              label="Upload Image"
-            />
-          </RadioGroup>
-          {imageSourceType === "url" ? (
             <TextField
               sx={{ margin: "10px" }}
-              label="Book Image URL"
-              value={editedBookImage}
-              onChange={handleBookImageChange}
-              error={!isImageValid}
-              helperText={
-                !isImageValid ? "Please enter a valid image URL." : ""
-              }
+              label="Quantity"
+              value={editedQuantity}
+              onChange={handleQuantityChange}
             />
-          ) : (
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => handleFileUpload(e)}
+            <TextField
               sx={{ margin: "10px" }}
+              label="Author"
+              value={editedAuthor}
+              onChange={handleAuthorChange}
             />
+            <FormControl sx={{ margin: "10px" }}>
+              <InputLabel id="department-label">Department</InputLabel>
+              <Select
+                labelId="department-label"
+                label="Department"
+                value={editedDepartment}
+                onChange={handleDepartmentChange}
+              >
+                <MenuItem value="Information Technology">
+                  Information Technology
+                </MenuItem>
+                <MenuItem value="Development Communication">
+                  Development Communication
+                </MenuItem>
+                <MenuItem value="Hotel Management">Hotel Management</MenuItem>
+                <MenuItem value="Education">Education</MenuItem>
+                <MenuItem value="Tourism">Tourism</MenuItem>
+              </Select>
+            </FormControl>
+            <RadioGroup
+              row
+              aria-label="image-source-type"
+              name="image-source-type"
+              value={imageSourceType}
+              onChange={handleImageSourceTypeChange}
+              sx={{ margin: "10px" }}
+            >
+              <FormControlLabel
+                value="url"
+                control={<Radio />}
+                label="Book Image URL"
+              />
+              <FormControlLabel
+                value="upload"
+                control={<Radio />}
+                label="Upload Image"
+              />
+            </RadioGroup>
+            {imageSourceType === "url" ? (
+              <TextField
+                sx={{ margin: "10px" }}
+                label="Book Image URL"
+                value={editedBookImage}
+                onChange={handleBookImageChange}
+                error={!isImageValid}
+                helperText={
+                  !isImageValid ? "Please enter a valid image URL." : ""
+                }
+              />
+            ) : (
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => handleFileUpload(e)}
+                sx={{ margin: "10px" }}
+              />
+            )}
+          </DialogContent>
+          {loading ? (
+            <Loading state={loading} size={20} />
+          ) : (
+            <>
+              <Button
+                onClick={handleUpdateButtonClick}
+                color="primary"
+                autoFocus
+              >
+                Update
+              </Button>
+              <Button
+                onClick={handleDeleteButtonClick}
+                color="primary"
+                autoFocus
+              >
+                Delete
+              </Button>
+            </>
           )}
-        </DialogContent>
-        {loading ? (
-          <Loading state={loading} size={20} />
-        ) : (
-          <>
-            <Button onClick={handleUpdateButtonClick} color="primary" autoFocus>
-              Update
-            </Button>
-            <Button onClick={handleDeleteButtonClick} color="primary" autoFocus>
-              Delete
-            </Button>
-          </>
-        )}
-      </Dialog>
-
+        </Dialog>
       )}
 
-{userRole === "User" && (
-      <Dialog open={openModal} onClose={handleCloseModal}>
-        <DialogTitle>
-          {selectedBook?.bookName}
-          <IconButton
-            edge="end"
-            color="inherit"
-            onClick={handleCloseModal}
-            aria-label="close"
-            style={{ position: "absolute", top: 0, right: 10 }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent>
-          <Typography variant="body1" sx={{ margin: "10px" }}>
-            <strong>Book Name:</strong> {selectedBook?.bookName}
-          </Typography>
-          <Typography variant="body1" sx={{ margin: "10px" }}>
-            <strong>Quantity:</strong> {selectedBook?.quantity}
-          </Typography>
-          <Typography variant="body1" sx={{ margin: "10px" }}>
-            <strong>Author:</strong> {selectedBook?.author}
-          </Typography>
-          <Typography variant="body1" sx={{ margin: "10px" }}>
-            <strong>Department:</strong> {selectedBook?.department}
-          </Typography>
-          {error && <Alert severity="error">{error}</Alert>}
-          {success && <Alert severity="success">{success}</Alert>}
-          <Button
-            onClick={handleBorrowButtonClick}
-            variant="contained"
-            color="primary"
-            sx={{ margin: "10px" }}
-            endIcon={<Loading state={loading} size={5} />}
-          >
-            Borrow
-          </Button>
-        </DialogContent>
-      </Dialog>
-
-)}
+      {userRole === "User" && (
+        <Dialog open={openModal} onClose={handleCloseModal}>
+          <DialogTitle>
+            {selectedBook?.bookName}
+            <IconButton
+              edge="end"
+              color="inherit"
+              onClick={handleCloseModal}
+              aria-label="close"
+              style={{ position: "absolute", top: 0, right: 10 }}
+            >
+              <CloseIcon />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent>
+            <Typography variant="body1" sx={{ margin: "10px" }}>
+              <strong>Book Name:</strong> {selectedBook?.bookName}
+            </Typography>
+            <Typography variant="body1" sx={{ margin: "10px" }}>
+              <strong>Quantity:</strong> {selectedBook?.quantity}
+            </Typography>
+            <Typography variant="body1" sx={{ margin: "10px" }}>
+              <strong>Author:</strong> {selectedBook?.author}
+            </Typography>
+            <Typography variant="body1" sx={{ margin: "10px" }}>
+              <strong>Department:</strong> {selectedBook?.department}
+            </Typography>
+            {error && <Alert severity="error">{error}</Alert>}
+            {success && <Alert severity="success">{success}</Alert>}
+            <Button
+              onClick={handleBorrowButtonClick}
+              variant="contained"
+              color="primary"
+              sx={{ margin: "10px" }}
+              endIcon={<Loading state={loading} size={5} />}
+            >
+              Borrow
+            </Button>
+          </DialogContent>
+        </Dialog>
+      )}
     </Container>
   );
 };

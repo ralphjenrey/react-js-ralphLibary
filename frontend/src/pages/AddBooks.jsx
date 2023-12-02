@@ -15,6 +15,7 @@ import {
   RadioGroup,
   Radio,
   Alert,
+  Container,
 } from "@mui/material";
 import Loading from "../components/Loading";
 import ManageAccountsIcon from "@mui/icons-material/AccountCircle";
@@ -25,7 +26,7 @@ const AddBooks = ({ open, onClose, handleAddBooksClick }) => {
   const [bookName, setBookName] = useState("");
   const [author, setAuthor] = useState("");
   const [quantity, setQuantity] = useState("");
-  const [bookImage, setBookImage] = useState(null);
+  const [bookImage, setBookImage] = useState("");
   const [imagePreview, setImagePreview] = useState(null);
   const [department, setDepartment] = useState("");
   const [imageSourceType, setImageSourceType] = useState("url");
@@ -36,7 +37,7 @@ const AddBooks = ({ open, onClose, handleAddBooksClick }) => {
   const handleImageSourceTypeChange = (event) => {
     setImageSourceType(event.target.value);
     console.log(imageSourceType);
-    setBookImage(null); // Clear the selected book image when changing source type
+    setBookImage(""); // Clear the selected book image when changing source type
     setImagePreview(null); // Clear the image preview
     setIsImageValid(true); // Reset image validation
   };
@@ -81,7 +82,7 @@ const AddBooks = ({ open, onClose, handleAddBooksClick }) => {
         setError(""); // Clear any previous error
       } else {
         setIsImageValid(false);
-        setBookImage(null);
+        setBookImage("");
         setImagePreview(null);
         setError("Please select a valid image file.");
       }
@@ -145,7 +146,7 @@ const AddBooks = ({ open, onClose, handleAddBooksClick }) => {
       setAuthor("");
       setQuantity("");
       setDepartment("");
-      setBookImage(null);
+      setBookImage("");
       setImagePreview(null);
       setLoading(false);
       setError("");
@@ -157,13 +158,14 @@ const AddBooks = ({ open, onClose, handleAddBooksClick }) => {
   };
 
   return (
-    <List>
+    <Container  maxWidth="xs"> 
+<List>
       <ListItem>
         <ListItemIcon>
           <ManageAccountsIcon />
         </ListItemIcon>
         <ListItemText
-          sx={{ color: "black", fontSize: "300" }}
+          sx={{ fontSize: "300" }}
           primary="Add Books"
         />
       </ListItem>
@@ -219,13 +221,13 @@ const AddBooks = ({ open, onClose, handleAddBooksClick }) => {
           sx={{ margin: "10px" }}
         >
           <FormControlLabel
-            sx={{ color: "black" }}
+           
             value="url"
             control={<Radio />}
             label="Book Image URL"
           />
           <FormControlLabel
-            sx={{ color: "black" }}
+           
             value="upload"
             control={<Radio />}
             label="Upload Image"
@@ -270,6 +272,8 @@ const AddBooks = ({ open, onClose, handleAddBooksClick }) => {
         </Button>
       </ListItem>
     </List>
+    </Container>
+    
   );
 };
 
