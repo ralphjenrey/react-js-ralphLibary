@@ -109,7 +109,7 @@ const Sidebar = ({ open, onClose, onMenuButtonClick }) => {
       console.error("Logout failed", error.message);
     }
   };
-
+  
   return (
     <Drawer variant="persistent" open={open} onClose={onClose}>
       <List className="sidebar-button-container">

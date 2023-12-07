@@ -1,23 +1,27 @@
 // themes.js
 import { createTheme } from "@mui/material/styles";
 
+
 // Light mode theme
 export const lightTheme = createTheme({
   palette: {
     mode: 'light',
     primary: {
-      main: '#1976D2', // Replace with your primary color
+      main: '#1976D2',
     },
     secondary: {
-      main: '#FF4081', // Replace with your secondary color
+      main: '#FF4081',
     },
     background: {
-      default: '#ffffff', // Replace with your background color
+      default: '#ffffff',
     },
     text: {
-      primary: '#333333', // Replace with your text color
-      secondary: '#666666', // Replace with your secondary text color
+      primary: '#333333',
+      secondary: '#666666',
     },
+  },
+  typography: {
+    fontFamily: 'Poppins, sans-serif', // Include Poppins font
   },
 });
 
@@ -26,17 +30,20 @@ export const darkTheme = createTheme({
   palette: {
     mode: 'dark',
     primary: {
-      main: '#90CAF9', // Replace with your primary color
+      main: '#90CAF9',
     },
     secondary: {
-      main: '#FF80AB', // Replace with your secondary color
+      main: '#FF80AB',
     },
     background: {
-      default: '#121212', // Replace with your background color
+      default: '#121212',
     },
     text: {
-      primary: '#ffffff', // Replace with your text color
-      secondary: '#CCCCCC', // Replace with your secondary text color
+      primary: '#ffffff',
+      secondary: '#CCCCCC',
     },
+  },
+  typography: {
+    fontFamily: 'Poppins, sans-serif', // Include Poppins font
   },
 });
