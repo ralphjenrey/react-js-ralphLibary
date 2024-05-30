@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   Container,
   Typography,
@@ -9,7 +9,7 @@ import {
 } from "@mui/material";
 import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
-import { getFirestore, collection, doc, getDoc, query, where, getDocs} from 'firebase/firestore';
+import { getFirestore, collection, query, where, getDocs} from 'firebase/firestore';
 
 
 
@@ -49,7 +49,7 @@ const LoginPage = () => {
       }
       
       // Authenticate the user if deletionTimestamp is not present
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      await signInWithEmailAndPassword(auth, email, password);
       
       // Continue with role-based navigation
       if (userRole === 'Admin') {
@@ -79,7 +79,7 @@ const LoginPage = () => {
           alignItems: "center",
         }}
       >
-        <Typography component="h1" color={"black"} variant="h4">
+        <Typography component="h1" variant="h4">
           Login
         </Typography>
         <Box component="form" noValidate sx={{ mt: 1 }}>
