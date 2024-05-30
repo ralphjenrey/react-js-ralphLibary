@@ -1,4 +1,4 @@
-import React, { useState,useEffect } from "react";
+import  { useState } from "react";
 import {
   InputLabel,
   Typography,
@@ -11,15 +11,6 @@ import {
 } from "@mui/material";
 import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
-
-import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
-import {
-  getFirestore,
-  collection,
-  addDoc,
-  setDoc,
-  doc,
-} from "firebase/firestore";
 
 import axios from 'axios';
 
@@ -58,7 +49,7 @@ const CreateAccount = () => {
       };
     
       // Send the user data to the backend
-      const response = await axios.post('http://localhost:4000/auth/createAccount', userData);
+      const response = await axios.post('https://ralphlibsys.onrender.com/auth/createAccount', userData);
 
       // Handle the response from the backend
       if (response.status === 201 || response.status === 200) {

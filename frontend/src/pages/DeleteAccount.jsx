@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   Checkbox,
   Typography,
@@ -19,10 +19,8 @@ import {
   getFirestore,
   collection,
   getDocs,
-  getDoc,
   query,
   where,
-  deleteDoc,
   doc,
   updateDoc,
   deleteField,
@@ -117,7 +115,7 @@ const DeleteAccount = () => {
     console.log(selectedItems);
     try {
       const response = await axios.post(
-        "http://localhost:4000/auth/deleteAccount",
+        "https://ralphlibsys.onrender.com/deleteAccount",
         {
           userIDs: selectedItems,
         }

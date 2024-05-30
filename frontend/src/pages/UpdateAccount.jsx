@@ -1,7 +1,6 @@
-import React, { useState } from "react";
+import  { useState } from "react";
 import axios from "axios";
 import CloseIcon from "@mui/icons-material/Close";
-import CheckIcon from "@mui/icons-material/Check";
 import {
   DialogContent,
   IconButton,
@@ -29,19 +28,10 @@ import {
   getFirestore,
   collection,
   getDocs,
-  getDoc,
   query,
   where,
-  updateDoc,
-  doc,
 } from "firebase/firestore";
 
-import {
-  getAuth,
-  updateEmail,
-  updateProfile,
-  sendEmailVerification,
-} from "firebase/auth";
 
 const UpdateAccount = () => {
   const [idNumber, setIdNumber] = useState("");
@@ -139,7 +129,7 @@ const UpdateAccount = () => {
 
       // Send data to the backend for update
       const response = await axios.post(
-        "http://localhost:4000/auth/updateAccount",
+        "https://ralphlibsys.onrender.com/auth/updateAccount",
         {
           users: updatedUsers,
         }
