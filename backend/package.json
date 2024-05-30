@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "build": "npm i",
     "start": "nodemon server.js",
     "deploy": "npx firebase deploy --only functions",
     "logs": "npx firebase functions:log",
